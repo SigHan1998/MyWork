@@ -285,8 +285,8 @@ package MyFM
       model RCload
         parameter Modelica.Units.SI.Resistance RL=1 "Resistance";
         parameter Modelica.Units.SI.Capacitance CL=1 "Capacitance";
-        Modelica.Electrical.Analog.Basic.Resistor resistor2(R=RL/2) annotation
-          (Placement(transformation(
+        Modelica.Electrical.Analog.Basic.Resistor resistor2(R=RL/2) annotation (
+           Placement(transformation(
               extent={{-10,-10},{10,10}},
               rotation=-90,
               origin={2,0})));
@@ -499,5 +499,109 @@ package MyFM
     end Tests;
     annotation ();
   end Tut3;
+
+  package Tut4
+    model ElectricKettle
+      Modelica.Electrical.Analog.Basic.Resistor resistor(R=230^2/2000,
+          useHeatPort=true) annotation (Placement(transformation(
+            extent={{-10,10},{10,-10}},
+            rotation=-90,
+            origin={-12,10})));
+      Modelica.Electrical.Analog.Basic.Ground ground
+        annotation (Placement(transformation(extent={{-100,-66},{-80,-46}})));
+      Modelica.Electrical.Analog.Sources.SineVoltage sineVoltage(V=230*sqrt(2),
+          f=50) annotation (Placement(transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=-90,
+            origin={-90,6})));
+      Modelica.Electrical.Analog.Sensors.PowerSensor powerSensor
+        annotation (Placement(transformation(extent={{-58,30},{-38,50}})));
+      Modelica.Blocks.Math.Mean mean(f=50) annotation (Placement(transformation(
+            extent={{-5,-5},{5,5}},
+            rotation=-90,
+            origin={-59,3})));
+      Modelica.Thermal.HeatTransfer.Components.HeatCapacitor Water(C=4.18*1700,
+          T(start=283.15, fixed=true))
+        annotation (Placement(transformation(extent={{-4,26},{16,46}})));
+      Modelica.Thermal.HeatTransfer.Celsius.TemperatureSensor temperatureSensor
+        annotation (Placement(transformation(extent={{20,0},{40,20}})));
+      Modelica.Electrical.Analog.Ideal.IdealClosingSwitch switch
+        annotation (Placement(transformation(extent={{-82,30},{-62,50}})));
+      Modelica.Thermal.HeatTransfer.Components.ThermalConductor
+        thermalConductor(G=5) annotation (Placement(transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=270,
+            origin={6,-22})));
+      Modelica.Thermal.HeatTransfer.Celsius.FixedTemperature RoomTemperature(T=
+            21) annotation (Placement(transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=0,
+            origin={-26,-54})));
+      Modelica.Blocks.Logical.OnOffController onOffController(bandwidth=3)
+        annotation (Placement(transformation(extent={{56,6},{76,26}})));
+      Modelica.Blocks.Sources.Constant const(k=95)
+        annotation (Placement(transformation(extent={{20,32},{40,52}})));
+    equation
+      connect(resistor.n, sineVoltage.n) annotation (Line(points={{-12,0},{-12,
+              -18},{-90,-18},{-90,-4}}, color={0,0,255}));
+      connect(ground.p, sineVoltage.n)
+        annotation (Line(points={{-90,-46},{-90,-4}}, color={0,0,255}));
+      connect(powerSensor.nc, resistor.p) annotation (Line(points={{-38,40},{
+              -12,40},{-12,20}}, color={0,0,255}));
+      connect(powerSensor.nv, sineVoltage.n) annotation (Line(points={{-48,30},
+              {-48,-18},{-90,-18},{-90,-4}}, color={0,0,255}));
+      connect(powerSensor.pv, resistor.p) annotation (Line(points={{-48,50},{
+              -48,62},{-12,62},{-12,20}}, color={0,0,255}));
+      connect(powerSensor.power, mean.u)
+        annotation (Line(points={{-58,29},{-58,9},{-59,9}}, color={0,0,127}));
+      connect(Water.port, resistor.heatPort)
+        annotation (Line(points={{6,26},{6,10},{-2,10}}, color={191,0,0}));
+      connect(temperatureSensor.port, resistor.heatPort)
+        annotation (Line(points={{20,10},{-2,10}}, color={191,0,0}));
+      connect(sineVoltage.p, switch.p) annotation (Line(points={{-90,16},{-90,
+              40},{-82,40}}, color={0,0,255}));
+      connect(switch.n, powerSensor.pc)
+        annotation (Line(points={{-62,40},{-58,40}}, color={0,0,255}));
+      connect(resistor.heatPort, thermalConductor.port_a)
+        annotation (Line(points={{-2,10},{6,10},{6,-12}}, color={191,0,0}));
+      connect(thermalConductor.port_b, RoomTemperature.port)
+        annotation (Line(points={{6,-32},{6,-54},{-16,-54}}, color={191,0,0}));
+      connect(temperatureSensor.T, onOffController.u)
+        annotation (Line(points={{40,10},{54,10}}, color={0,0,127}));
+      connect(const.y, onOffController.reference) annotation (Line(points={{41,
+              42},{48,42},{48,22},{54,22}}, color={0,0,127}));
+      connect(onOffController.y, switch.control) annotation (Line(points={{77,
+              16},{84,16},{84,80},{-72,80},{-72,52}}, color={255,0,255}));
+      annotation (
+        Icon(coordinateSystem(preserveAspectRatio=false)),
+        Diagram(coordinateSystem(preserveAspectRatio=false)),
+        experiment(StopTime=600, __Dymola_NumberOfIntervals=5000));
+    end ElectricKettle;
+
+    model TestHeatConductance
+      Modelica.Thermal.HeatTransfer.Components.HeatCapacitor Water(C=4.18*1700,
+          T(start=368.15, fixed=true))
+        annotation (Placement(transformation(extent={{-16,42},{4,62}})));
+      Modelica.Thermal.HeatTransfer.Components.ThermalConductor
+        thermalConductor(G=5) annotation (Placement(transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=270,
+            origin={-6,10})));
+      Modelica.Thermal.HeatTransfer.Celsius.FixedTemperature RoomTemperature(T=
+            21) annotation (Placement(transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=0,
+            origin={-38,-22})));
+    equation
+      connect(thermalConductor.port_b, RoomTemperature.port)
+        annotation (Line(points={{-6,0},{-6,-22},{-28,-22}}, color={191,0,0}));
+      connect(Water.port, thermalConductor.port_a)
+        annotation (Line(points={{-6,42},{-6,20}}, color={191,0,0}));
+      annotation (
+        Icon(coordinateSystem(preserveAspectRatio=false)),
+        Diagram(coordinateSystem(preserveAspectRatio=false)),
+        experiment(StopTime=3600, __Dymola_NumberOfIntervals=5000));
+    end TestHeatConductance;
+  end Tut4;
   annotation (uses(Modelica(version="4.0.0")));
 end MyFM;
