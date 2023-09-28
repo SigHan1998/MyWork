@@ -603,5 +603,131 @@ package MyFM
         experiment(StopTime=3600, __Dymola_NumberOfIntervals=5000));
     end TestHeatConductance;
   end Tut4;
-  annotation (uses(Modelica(version="4.0.0")));
+
+  package Tut5
+    model ConnectingPipes
+      inner HydroPower.System_HPL system_HPL(steadyState=true,
+          constantTemperature=true)
+        annotation (Placement(transformation(extent={{-100,80},{-80,100}})));
+      HydroPower.HydroSystems.Pipe pipe1(L=100, ZL=90)
+        annotation (Placement(transformation(extent={{-10,44},{10,64}})));
+      HydroPower.SinksAndSources.Fixed_pT source1(paraOption=false)
+        annotation (Placement(transformation(extent={{-60,44},{-40,64}})));
+      HydroPower.SinksAndSources.Fixed_pT sink1(paraOption=false)
+        annotation (Placement(transformation(extent={{62,44},{42,64}})));
+    equation
+      connect(source1.b, pipe1.a)
+        annotation (Line(points={{-39,54},{-11,54}}, color={0,0,255}));
+      connect(sink1.b, pipe1.b)
+        annotation (Line(points={{41,54},{11,54}}, color={0,0,255}));
+      annotation (
+        Icon(coordinateSystem(preserveAspectRatio=false)),
+        Diagram(coordinateSystem(preserveAspectRatio=false)),
+        experiment(
+          StopTime=100,
+          __Dymola_NumberOfIntervals=5000,
+          Tolerance=1e-05,
+          __Dymola_Algorithm="Radau"));
+    end ConnectingPipes;
+
+    model PipeWithValve
+      extends ConnectingPipes(system_HPL(pipeRoughness=0));
+      HydroPower.HydroSystems.PipeValve pipeValve2(
+        m_dot_nom=1000*100e6/(1e3*9.81*90),
+        dp_nom=101325*90/9.81,
+        d_nom(displayUnit="kg/m3"),
+        ZL=90)
+        annotation (Placement(transformation(extent={{-10,-10},{10,10}})));
+      HydroPower.SinksAndSources.Fixed_pT source2(paraOption=false)
+        annotation (Placement(transformation(extent={{-62,-10},{-42,10}})));
+      HydroPower.SinksAndSources.Fixed_pT sink2(paraOption=false)
+        annotation (Placement(transformation(extent={{60,-10},{40,10}})));
+      Modelica.Blocks.Sources.Ramp ramp(
+        height=-0.9,
+        duration=10,
+        offset=1,
+        startTime=20)
+        annotation (Placement(transformation(extent={{-100,18},{-80,38}})));
+    equation
+      connect(pipeValve2.b, sink2.b)
+        annotation (Line(points={{11,0},{39,0}}, color={0,0,255}));
+      connect(pipeValve2.a, source2.b)
+        annotation (Line(points={{-11,0},{-41,0}}, color={0,0,255}));
+      connect(ramp.y, pipeValve2.ValveCtrl)
+        annotation (Line(points={{-79,28},{0,28},{0,11}}, color={0,0,127}));
+    end PipeWithValve;
+
+    model SimpleWaterWay
+      extends PipeWithValve;
+      HydroPower.SinksAndSources.Fixed_pT source3(paraOption=false)
+        annotation (Placement(transformation(extent={{-82,-50},{-62,-30}})));
+      HydroPower.SinksAndSources.Fixed_pT sink3(paraOption=false)
+        annotation (Placement(transformation(extent={{84,-50},{64,-30}})));
+      HydroPower.HydroSystems.PipeValve pipeValve3(
+        m_dot_nom=1000*100e6/(1e3*9.81*90),
+        dp_nom=101325*90/9.81,
+        d_nom(displayUnit="kg/m3"),
+        ZL=90)
+        annotation (Placement(transformation(extent={{26,-50},{46,-30}})));
+      HydroPower.HydroSystems.Pipe pipe3(
+        horizontalIcon=true,
+        L=10000,
+        ZL=100,
+        ZR=90)
+        annotation (Placement(transformation(extent={{-38,-50},{-18,-30}})));
+      HydroPower.HydroSystems.HydroComponents.Containers.ClosedVolume
+        closedVolume(D=10)
+        annotation (Placement(transformation(extent={{-8,-50},{12,-30}})));
+    equation
+      connect(pipeValve3.ValveCtrl, pipeValve2.ValveCtrl) annotation (Line(
+            points={{36,-29},{36,-20},{26,-20},{26,28},{0,28},{0,11}}, color={0,
+              0,127}));
+      connect(sink3.b, pipeValve3.b)
+        annotation (Line(points={{63,-40},{47,-40}}, color={0,0,255}));
+      connect(pipe3.a, source3.b)
+        annotation (Line(points={{-39,-40},{-61,-40}}, color={0,0,255}));
+      connect(pipe3.b, closedVolume.a)
+        annotation (Line(points={{-17,-40},{-8,-40}}, color={0,0,255}));
+      connect(closedVolume.b, pipeValve3.a)
+        annotation (Line(points={{12,-40},{25,-40}}, color={0,0,255}));
+    end SimpleWaterWay;
+
+    model SimpleWaterWayWithSurgeTank
+      extends SimpleWaterWay;
+      HydroPower.SinksAndSources.Fixed_pT source4(paraOption=false)
+        annotation (Placement(transformation(extent={{-84,-90},{-64,-70}})));
+      HydroPower.SinksAndSources.Fixed_pT sink4(paraOption=false)
+        annotation (Placement(transformation(extent={{88,-90},{68,-70}})));
+      HydroPower.HydroSystems.PipeValve pipeValve4(
+        m_dot_nom=1000*100e6/(1e3*9.81*90),
+        dp_nom=101325*90/9.81,
+        d_nom(displayUnit="kg/m3"),
+        ZL=90)
+        annotation (Placement(transformation(extent={{26,-90},{46,-70}})));
+      HydroPower.HydroSystems.Pipe pipe4(
+        horizontalIcon=true,
+        L=10000,
+        ZL=100,
+        ZR=90)
+        annotation (Placement(transformation(extent={{-54,-90},{-34,-70}})));
+      HydroPower.HydroSystems.SurgeTank surgeTank(
+        D=10,
+        deltZ=100,
+        Vol=100)
+        annotation (Placement(transformation(extent={{-16,-90},{4,-70}})));
+    equation
+      connect(source4.b, pipe4.a)
+        annotation (Line(points={{-63,-80},{-55,-80}}, color={0,0,255}));
+      connect(pipe4.b, surgeTank.a)
+        annotation (Line(points={{-33,-80},{-17,-80}}, color={0,0,255}));
+      connect(pipeValve4.a, surgeTank.b)
+        annotation (Line(points={{25,-80},{5,-80}}, color={0,0,255}));
+      connect(pipeValve4.ValveCtrl, pipeValve2.ValveCtrl) annotation (Line(
+            points={{36,-69},{28,-69},{28,-60},{18,-60},{18,28},{0,28},{0,11}},
+            color={0,0,127}));
+      connect(pipeValve4.b, sink4.b)
+        annotation (Line(points={{47,-80},{67,-80}}, color={0,0,255}));
+    end SimpleWaterWayWithSurgeTank;
+  end Tut5;
+  annotation (uses(Modelica(version="4.0.0"), HydroPower(version="2.17")));
 end MyFM;
