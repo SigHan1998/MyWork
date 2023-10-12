@@ -1004,12 +1004,11 @@ package MyFM
       Modelica.Blocks.Sources.Ramp pwr_ref(
         duration=10,
         height=0,
-        offset=80e6,
+        offset=100e6,
         startTime=1e6) annotation (Placement(transformation(extent={{-37,64},{-25,
                 76}}, rotation=0)));
       HydroPower.ElectricalSystems.GeneratorAndMCB generator(
         np={12},
-        Kdmp={0.05},
         f_start=0,
         J={85e3},
         timeMCB_close={150},
@@ -1021,11 +1020,11 @@ package MyFM
       HydroPower.ControllersAndSensors.TurbineGovernorAnalog turbineGovernor(
         ep=1,
         DeadBand=0.001,
-        Ki_load=0.1,
+        Ki_load=0.2,
         Kd_load=0.5,
-        Kd_noLoad=0.05,
-        Ki_noLoad=0.025,
-        K_noLoad=0.2,
+        Kd_noLoad=0.1,
+        Ki_noLoad=0.02,
+        K_noLoad=0.8,
         K_load=0.4,
         tRamp=40,
         P_generator_nom=generator.P_nom[1],
