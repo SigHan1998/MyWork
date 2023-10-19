@@ -1048,11 +1048,11 @@ package MyFM
         Q_start=24,
         constantTemperature=true)
         annotation (Placement(transformation(extent={{-90,-80},{-70,-60}})));
-      HydroPower.Visualizers.RealValue gridbalanceNum1(precision=2, input_Value
-          =generator.summary.f[1])
+      HydroPower.Visualizers.RealValue gridbalanceNum1(precision=2, input_Value=
+           generator.summary.f[1])
         annotation (Placement(transformation(extent={{64,53},{78,67}})));
-      HydroPower.Visualizers.RealValue gridbalanceNum2(precision=2, input_Value
-          =generator.summary.P_generator[1]*1e-6)
+      HydroPower.Visualizers.RealValue gridbalanceNum2(precision=2, input_Value=
+           generator.summary.P_generator[1]*1e-6)
         annotation (Placement(transformation(extent={{64,25},{78,39}})));
       HydroPower.HydroSystems.SurgeTank surgeTank(
         D=3.6,
@@ -1234,6 +1234,169 @@ package MyFM
         __Dymola_experimentSetupOutput);
     end Sundsbarm;
   end Tut7;
+
+  package Tut8
+    model EquivalentPowerFlow
+      Modelica.Mechanics.Rotational.Components.Inertia Grid(
+        J=100,
+        phi(displayUnit="deg"),
+        w(start=314.15926535898, displayUnit="Hz"))
+        annotation (Placement(transformation(extent={{-26,-20},{22,28}})));
+      Modelica.Mechanics.Rotational.Sources.ConstantTorque Load(tau_constant=-10)
+        annotation (Placement(transformation(extent={{90,-6},{70,14}})));
+      Modelica.Mechanics.Rotational.Sources.ConstantTorque Generator(
+          tau_constant=10)
+        annotation (Placement(transformation(extent={{-80,-8},{-60,12}})));
+    equation
+      connect(Grid.flange_b, Load.flange)
+        annotation (Line(points={{22,4},{70,4}}, color={0,0,0}));
+      connect(Grid.flange_a, Generator.flange) annotation (Line(points={{-26,4},
+              {-44,4},{-44,2},{-60,2}}, color={0,0,0}));
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)));
+    end EquivalentPowerFlow;
+
+    model FrequencyCalc
+      Modelica.Mechanics.Rotational.Components.Inertia Intertia(
+        J=2*200*10^6/(2*3.14*50)^2,
+        phi(displayUnit="deg"),
+        w(start=314.15926535898, displayUnit="Hz"))
+        annotation (Placement(transformation(extent={{-80,32},{-54,58}})));
+      Modelica.Mechanics.Rotational.Sources.ConstantTorque Load(tau_constant=-10
+            *10^6/(2*3.14*50))
+        annotation (Placement(transformation(extent={{86,36},{66,56}})));
+      Modelica.Mechanics.Rotational.Sensors.PowerSensor powerSensor
+        annotation (Placement(transformation(extent={{4,40},{24,60}})));
+      Modelica.Blocks.Continuous.Integrator integrator annotation (Placement(
+            transformation(
+            extent={{10,-10},{-10,10}},
+            rotation=90,
+            origin={6,8})));
+    equation
+      connect(Intertia.flange_b, powerSensor.flange_a) annotation (Line(points=
+              {{-54,45},{-25,45},{-25,50},{4,50}}, color={0,0,0}));
+      connect(powerSensor.flange_b, Load.flange) annotation (Line(points={{24,
+              50},{36,50},{36,46},{66,46}}, color={0,0,0}));
+      connect(powerSensor.power, integrator.u)
+        annotation (Line(points={{6,39},{6,20}}, color={0,0,127}));
+      annotation (
+        Icon(coordinateSystem(preserveAspectRatio=false)),
+        Diagram(coordinateSystem(preserveAspectRatio=false)),
+        experiment(Tolerance=1e-05, __Dymola_Algorithm="Radau"));
+    end FrequencyCalc;
+
+    model FrequencyCalcCorrect
+      extends FrequencyCalc;
+      Modelica.Mechanics.Rotational.Components.Inertia Intertia1(
+        J=2*200*10^6/(2*3.14*50)^2,
+        phi(displayUnit="deg"),
+        w(start=314.15926535898, displayUnit="Hz"))
+        annotation (Placement(transformation(extent={{-98,-32},{-72,-6}})));
+      Modelica.Mechanics.Rotational.Sensors.PowerSensor powerSensor1
+        annotation (Placement(transformation(extent={{-20,-30},{0,-10}})));
+      Modelica.Blocks.Continuous.Integrator integrator1 annotation (Placement(
+            transformation(
+            extent={{10,-10},{-10,10}},
+            rotation=90,
+            origin={-18,-58})));
+      Modelica.Mechanics.Rotational.Sources.Torque torque
+        annotation (Placement(transformation(extent={{52,-28},{32,-8}})));
+      Modelica.Mechanics.Rotational.Sensors.SpeedSensor speedSensor annotation
+        (Placement(transformation(
+            extent={{10,-10},{-10,10}},
+            rotation=90,
+            origin={-50,-74})));
+      Modelica.Blocks.Math.Division division
+        annotation (Placement(transformation(extent={{46,-94},{66,-74}})));
+      Modelica.Blocks.Sources.Constant const(k=-10e6)
+        annotation (Placement(transformation(extent={{4,-82},{24,-62}})));
+    equation
+      connect(Intertia1.flange_b, powerSensor1.flange_a) annotation (Line(
+            points={{-72,-19},{-40,-19},{-40,-20},{-20,-20}}, color={0,0,0}));
+      connect(powerSensor1.power, integrator1.u)
+        annotation (Line(points={{-18,-31},{-18,-46}}, color={0,0,127}));
+      connect(powerSensor1.flange_b, torque.flange) annotation (Line(points={{0,
+              -20},{16,-20},{16,-18},{32,-18}}, color={0,0,0}));
+      connect(Intertia1.flange_b, speedSensor.flange) annotation (Line(points={
+              {-72,-19},{-72,-64},{-50,-64}}, color={0,0,0}));
+      connect(speedSensor.w, division.u2) annotation (Line(points={{-50,-85},{
+              -12,-85},{-12,-90},{44,-90}}, color={0,0,127}));
+      connect(division.u1, const.y) annotation (Line(points={{44,-78},{34,-78},
+              {34,-72},{25,-72}}, color={0,0,127}));
+      connect(division.y, torque.tau) annotation (Line(points={{67,-84},{78,-84},
+              {78,-18},{54,-18}}, color={0,0,127}));
+    end FrequencyCalcCorrect;
+
+    model ElectricalPowerFlowCalc
+      Modelica.Electrical.Analog.Basic.Inductor Xs
+        annotation (Placement(transformation(extent={{-10,38},{10,58}})));
+      Modelica.Electrical.Analog.Sources.SineVoltage Ea annotation (Placement(
+            transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=-90,
+            origin={-68,26})));
+      Modelica.Electrical.Analog.Sources.SineVoltage Vterminal annotation (
+          Placement(transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=-90,
+            origin={58,24})));
+      Modelica.Electrical.Analog.Basic.Ground ground
+        annotation (Placement(transformation(extent={{-78,-24},{-58,-4}})));
+      Modelica.Electrical.Analog.Sensors.PowerSensor powerSensor
+        annotation (Placement(transformation(extent={{20,38},{40,58}})));
+      Modelica.Electrical.Polyphase.Sources.SineVoltage EaM(
+        V=sqrt(2)*{230,230,230},
+        phase=Modelica.Electrical.Polyphase.Functions.symmetricOrientation(3)
+             + {30,30,30}/180*Modelica.Constants.pi,
+        f={50,50,50})
+        annotation (Placement(transformation(extent={{-40,-38},{-60,-18}})));
+      Modelica.Electrical.Polyphase.Sources.SineVoltage VterminalM(V=sqrt(2)*{
+            230,230,230}, f={50,50,50})
+        annotation (Placement(transformation(extent={{54,-30},{34,-10}})));
+      Modelica.Electrical.Polyphase.Sensors.ReactivePowerSensor
+        reactivePowerSensor
+        annotation (Placement(transformation(extent={{4,-34},{24,-14}})));
+      Modelica.Electrical.Analog.Basic.Ground ground1
+        annotation (Placement(transformation(extent={{-76,-104},{-56,-84}})));
+      Modelica.Electrical.Polyphase.Basic.Star star annotation (Placement(
+            transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=-90,
+            origin={-66,-60})));
+      Modelica.Electrical.Polyphase.Sensors.AronSensor aronSensor
+        annotation (Placement(transformation(extent={{-24,-36},{-4,-16}})));
+    equation
+      connect(Ea.n, ground.p)
+        annotation (Line(points={{-68,16},{-68,-4}}, color={0,0,255}));
+      connect(Vterminal.n, ground.p) annotation (Line(points={{58,14},{58,10},{
+              -68,10},{-68,-4}}, color={0,0,255}));
+      connect(Xs.p, Ea.p) annotation (Line(points={{-10,48},{-68,48},{-68,36}},
+            color={0,0,255}));
+      connect(Vterminal.p, powerSensor.nc)
+        annotation (Line(points={{58,34},{58,48},{40,48}}, color={0,0,255}));
+      connect(powerSensor.pc, Xs.n)
+        annotation (Line(points={{20,48},{10,48}}, color={0,0,255}));
+      connect(powerSensor.pv, powerSensor.nc) annotation (Line(points={{30,58},
+              {30,74},{56,74},{56,48},{40,48}}, color={0,0,255}));
+      connect(powerSensor.nv, ground.p) annotation (Line(points={{30,38},{30,10},
+              {-68,10},{-68,-4}}, color={0,0,255}));
+      connect(star.pin_n, ground1.p) annotation (Line(points={{-66,-70},{-62,
+              -70},{-62,-84},{-66,-84}}, color={0,0,255}));
+      connect(star.plug_p, EaM.plug_n) annotation (Line(points={{-66,-50},{-66,
+              -28},{-60,-28}}, color={0,0,255}));
+      connect(reactivePowerSensor.plug_n, VterminalM.plug_n) annotation (Line(
+            points={{24,-24},{28,-24},{28,-20},{34,-20}}, color={0,0,255}));
+      connect(VterminalM.plug_p, EaM.plug_n) annotation (Line(points={{54,-20},
+              {70,-20},{70,-48},{-66,-48},{-66,-28},{-60,-28}}, color={0,0,255}));
+      connect(EaM.plug_p, aronSensor.plug_p) annotation (Line(points={{-40,-28},
+              {-32,-28},{-32,-26},{-24,-26}}, color={0,0,255}));
+      connect(reactivePowerSensor.plug_p, aronSensor.plug_n) annotation (Line(
+            points={{4,-24},{0,-24},{0,-26},{-4,-26}}, color={0,0,255}));
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false, extent={{
+                -100,-120},{100,100}})), Diagram(coordinateSystem(
+              preserveAspectRatio=false, extent={{-100,-120},{100,100}})));
+    end ElectricalPowerFlowCalc;
+  end Tut8;
   annotation (uses(Modelica(version="4.0.0"), HydroPower(version="2.17"),
       Modelon(version="4.3")));
 end MyFM;
