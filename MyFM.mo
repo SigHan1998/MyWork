@@ -1301,8 +1301,8 @@ package MyFM
             origin={-18,-58})));
       Modelica.Mechanics.Rotational.Sources.Torque torque
         annotation (Placement(transformation(extent={{52,-28},{32,-8}})));
-      Modelica.Mechanics.Rotational.Sensors.SpeedSensor speedSensor annotation
-        (Placement(transformation(
+      Modelica.Mechanics.Rotational.Sensors.SpeedSensor speedSensor annotation (
+         Placement(transformation(
             extent={{10,-10},{-10,10}},
             rotation=90,
             origin={-50,-74})));
@@ -1397,6 +1397,23 @@ package MyFM
               preserveAspectRatio=false, extent={{-100,-120},{100,100}})));
     end ElectricalPowerFlowCalc;
   end Tut8;
+
+  package Tut9
+    model ResistiveLoad
+      extends HydroPower.Examples.PlantConnectAndDisconnectToGrid(
+        pwr_ref(offset=22.5e6),
+        powerGrid(
+          loadDiv={1,0,0},
+          NoLoadUnits={4,0,0},
+          enableDroop=true,
+          NoGenUnits={20,20,1},
+          distTgen={150,1000,1e6},
+          distNoGen={-1,-10,0}),
+        turbineGovernor(enableDroop=false),
+        generator(timeMCB_open={3000}));
+      annotation (experiment(StopTime=3000, __Dymola_Algorithm="Radau"));
+    end ResistiveLoad;
+  end Tut9;
   annotation (uses(Modelica(version="4.0.0"), HydroPower(version="2.17"),
       Modelon(version="4.3")));
 end MyFM;
